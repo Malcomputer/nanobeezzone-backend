@@ -17,4 +17,20 @@ app.get('/', (req, res) => {
 	res.send('Server Running');
 });
 
+app.post('/signup', (req, res) => {
+	if (!req.body.username || !req.body.password || !req.body.name) {
+		res.status(401).json({error: {message: 'All input fields required!', status: res.statusCode}});
+	}
+	client.connect(() => {
+		const userCollection = client.db("nanobeezzone").collection("users");
+		const newUser = {...req.body, password: getHashedPassword(req.body.password)};
+		userCollection.findOne({username: newUser.username}, (err, result) => {
+			if (err) throw err;
+			if (result) res.status(401).json({error: {message: 'Username already exist!', status: res.statusCode}});
+			else userCollection.insertOne(newUser).then(() => res.send({success: {message: 'New User created!', status: res.statusCode}}));
+		});
+	});
+});
+});
+
 app.listen(port, () => console.log(`Listening on http://localhost:${port}/`));
