@@ -31,6 +31,21 @@ app.post('/signup', (req, res) => {
 		});
 	});
 });
+
+app.post('/login', (req, res) => {
+	if (!req.body.username || !req.body.password) {
+		res.status(401).json({error: {message: 'All input fields required!', status: res.statusCode}});
+	}
+	client.connect(() => {
+		const userCollection = client.db("nanobeezzone").collection("users");
+		userCollection.findOne({username: req.body.username, password: getHashedPassword(req.body.password)}, ((error, result) => {
+			if (error) throw error;
+			if (result) {
+				const accessToken = jwt.sign({username: result.username, name: result.name}, process.env.ATS);
+				res.json({accessToken});
+			} else res.status(401).send('Username or password incorrect');
+		}));
+	});
 });
 
 app.listen(port, () => console.log(`Listening on http://localhost:${port}/`));
