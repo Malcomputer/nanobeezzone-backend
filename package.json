@@ -1,0 +1,23 @@
+{
+  "name": "nanobeezzone-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node .",
+    "dev": "nodemon ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Malcomputer/nanobeezzone-backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Malcomputer/nanobeezzone-backend/issues"
+  },
+  "homepage": "https://github.com/Malcomputer/nanobeezzone-backend#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
