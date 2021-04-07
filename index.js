@@ -31,7 +31,7 @@ app.get('/', (req, res) => {
 	res.send('Server Running');
 });
 
-app.get('/user', (req, res) => {
+app.get('/user', authenticateJWT, (req, res) => {
 	res.send(req.user);
 });
 
