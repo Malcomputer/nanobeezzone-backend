@@ -4,6 +4,8 @@ const express = require('express');
 const crypto = require('crypto');
 const app = express();
 const port = process.env.PORT || 3001;
+require('dotenv').config();
+
 app.use(express.json());
 
 const getHashedPassword = password => {
@@ -11,10 +13,26 @@ const getHashedPassword = password => {
 	return sha256.update(password).digest('base64');
 }
 
+const authenticateJWT = (req, res, next) => {
+	const authHeader = req.headers.authorization;
+	if (authHeader) {
+		const token = authHeader.split(' ')[1];
+		jwt.verify(token, process.env.ATS, (err, user) => {
+			if (err) return res.sendStatus(403);
+			req.user = {...user, issuedAt: parseInt(`${user.iat}000`), iat: undefined};
+			next();
+		});
+	} else res.sendStatus(401);
+};
+
 const client = new MongoClient(process.env.DB, {useNewUrlParser: true, useUnifiedTopology: true});
 
 app.get('/', (req, res) => {
 	res.send('Server Running');
+});
+
+app.get('/user', (req, res) => {
+	res.send(req.user);
 });
 
 app.post('/signup', (req, res) => {
@@ -27,7 +45,7 @@ app.post('/signup', (req, res) => {
 		userCollection.findOne({username: newUser.username}, (err, result) => {
 			if (err) throw err;
 			if (result) res.status(401).json({error: {message: 'Username already exist!', status: res.statusCode}});
-			else userCollection.insertOne(newUser).then(() => res.send({success: {message: 'New User created!', status: res.statusCode}}));
+			else userCollection.insertOne(newUser).then(() => res.status(201).json({success: {message: 'New User created!', status: res.statusCode}}));
 		});
 	});
 });
