@@ -31,11 +31,12 @@ const authenticateJWT = (req, res, next) => {
 	if (authHeader) {
 		const token = authHeader.split(' ')[1];
 		jwt.verify(token, process.env.ATS, (err, user) => {
-			if (err) return res.sendStatus(403);
-			req.user = {...user, issuedAt: parseInt(`${user.iat}000`), iat: undefined};
+			if (err) return res.status(403).json({error: {message: err, status: res.statusCode}});
+			delete user.iat;
+			req.user = user;
 			next();
 		});
-	} else res.sendStatus(401);
+	} else res.status(401).json({error: {message: 'Missing Authorization header', status: res.statusCode}});
 };
 
 const client = new MongoClient(process.env.DB, {useNewUrlParser: true, useUnifiedTopology: true});
@@ -69,12 +70,12 @@ app.post('/login', (req, res) => {
 	}
 	client.connect(() => {
 		const userCollection = client.db("nanobeezzone").collection("users");
-		userCollection.findOne({username: req.body.username, password: getHashedPassword(req.body.password)}, ((error, result) => {
+		userCollection.findOne({username: req.body.username, password: getHashedPassword(req.body.password)}, ((error, user) => {
 			if (error) throw error;
-			if (result) {
-				const accessToken = jwt.sign({username: result.username, name: result.name}, process.env.ATS);
-				res.json({accessToken});
-			} else res.status(401).send('Username or password incorrect');
+			if (user) {
+				const accessToken = jwt.sign({username: user.username, name: user.name, id: user._id}, process.env.ATS);
+				res.json({accessToken, user: {...user, password: undefined}});
+			} else res.status(401).json({error: {message: 'Username or password incorrect', status: res.statusCode}});
 		}));
 	});
 });
