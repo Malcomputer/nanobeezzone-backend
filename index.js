@@ -2,12 +2,13 @@ const MongoClient = require('mongodb').MongoClient;
 const jwt = require('jsonwebtoken');
 const express = require('express');
 const crypto = require('crypto');
+const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3001;
 require('dotenv').config();
 
 app.use(express.json());
-
+app.use(cors());
 app.use(function (req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header(
