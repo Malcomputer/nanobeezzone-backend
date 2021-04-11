@@ -50,6 +50,16 @@ app.get('/user', authenticateJWT, (req, res) => {
 	res.send(req.user);
 });
 
+app.get('/user/:username', authenticateJWT, (req, res) => {
+	client.connect(() => {
+		const userCollection = client.db("nanobeezzone").collection("users");
+		userCollection.findOne({username: req.params.username}, ((err, result) => {
+			if (err || result === null) return res.status(404).json({error: {message: 'User not found', status: res.statusCode}});
+			if (result.username) res.json({...result, password: undefined});
+		}));
+	});
+});
+
 app.post('/signup', (req, res) => {
 	if (!req.body.username || !req.body.password || !req.body.name) {
 		res.status(401).json({error: {message: 'All input fields required!', status: res.statusCode}});
@@ -75,7 +85,7 @@ app.post('/login', (req, res) => {
 			if (error) throw error;
 			if (user) {
 				const accessToken = jwt.sign({username: user.username, name: user.name, id: user._id}, process.env.ATS);
-				res.json({accessToken, user: {...user, password: undefined}});
+				res.json({...user, password: undefined, accessToken});
 			} else res.status(401).json({error: {message: 'Username or password incorrect', status: res.statusCode}});
 		}));
 	});
