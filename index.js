@@ -50,6 +50,13 @@ app.get('/user', authenticateJWT, (req, res) => {
 	res.send(req.user);
 });
 
+app.get('/users', authenticateJWT, (req,res) => {
+	client.connect(() => {
+		const userCollection = client.db("nanobeezzone").collection("users");
+		userCollection.find({}).toArray().then(users => users.filter(user =>  delete user.password)).then(users => res.json(users));
+	});
+});
+
 app.get('/user/:username', authenticateJWT, (req, res) => {
 	client.connect(() => {
 		const userCollection = client.db("nanobeezzone").collection("users");
