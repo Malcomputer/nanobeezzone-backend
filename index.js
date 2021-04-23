@@ -98,4 +98,21 @@ app.post('/login', (req, res) => {
 	});
 });
 
+app.get('/message/:receiver/:sender', authenticateJWT, (req, res) => {
+  client.connect(() => {
+  	const messagesCollection = client.db("nanobeezzone").collection("messages");
+  	messagesCollection.find({"author.username": req.params.sender, receiver: req.params.receiver}).toArray().then(data => res.json(data)).catch(console.error);
+  });
+});
+
+app.post('/message', authenticateJWT, (req, res) => {
+  if (!req.body.newMessage) {
+  	res.status(401).json({error:{message: 'Content required', status: res.statusCode}});
+  }
+  client.connect(() => {
+	  const messagesCollection = client.db("nanobeezzone").collection("messages");
+	  messagesCollection.insertOne(req.body.newMessage).then(() => res.status(201).json({success: {message: 'Message Sent!', status: res.statusCode}}));
+  });
+});
+
 app.listen(port, () => console.log(`Listening on http://localhost:${port}/`));
