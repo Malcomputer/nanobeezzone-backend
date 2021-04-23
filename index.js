@@ -99,9 +99,11 @@ app.post('/login', (req, res) => {
 });
 
 app.get('/message/:receiver/:sender', authenticateJWT, (req, res) => {
-  client.connect(() => {
+  client.connect(async () => {
   	const messagesCollection = client.db("nanobeezzone").collection("messages");
-  	messagesCollection.find({"author.username": req.params.sender, receiver: req.params.receiver}).toArray().then(data => res.json(data)).catch(console.error);
+  	const userOne = await messagesCollection.find({"author.username": req.params.sender, receiver: req.params.receiver}).toArray();
+  	const userTwo = await messagesCollection.find({"author.username": req.params.receiver, receiver: req.params.sender}).toArray();
+  	res.json([...userOne, ...userTwo]);
   });
 });
 
