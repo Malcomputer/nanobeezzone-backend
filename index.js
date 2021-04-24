@@ -98,6 +98,13 @@ app.post('/login', (req, res) => {
 	});
 });
 
+app.get('/messages/:user', authenticateJWT, (req, res) => {
+	client.connect(() => {
+		const messagesCollection = client.db("nanobeezzone").collection("messages");
+		messagesCollection.find({message_id:{$regex: req.params.user}}).toArray().then(messages => res.json(messages));
+	});
+});
+
 app.get('/message/:receiver/:sender', authenticateJWT, (req, res) => {
   client.connect(async () => {
   	const messagesCollection = client.db("nanobeezzone").collection("messages");
