@@ -7,6 +7,7 @@ const app = express();
 const port = process.env.PORT || 3001;
 require('dotenv').config();
 
+app.use(express.static('public'));
 app.use(express.json());
 app.use(cors());
 app.use(function (req, res, next) {
@@ -41,10 +42,6 @@ const authenticateJWT = (req, res, next) => {
 };
 
 const client = new MongoClient(process.env.DB, {useNewUrlParser: true, useUnifiedTopology: true});
-
-app.get('/', (req, res) => {
-	res.send('Server Running');
-});
 
 app.get('/user', authenticateJWT, (req, res) => {
 	res.send(req.user);
@@ -123,5 +120,7 @@ app.post('/message', authenticateJWT, (req, res) => {
 	  messagesCollection.insertOne(req.body.newMessage).then(() => res.status(201).json({success: {message: 'Message Sent!', status: res.statusCode}}));
   });
 });
+
+app.get('*', (req, res) => res.sendFile(__dirname + '/public/index.html'));
 
 app.listen(port, () => console.log(`Listening on http://localhost:${port}/`));
