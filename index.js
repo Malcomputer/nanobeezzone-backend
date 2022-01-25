@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3001;
-const io = require('socket.io')();
+const io = require('socket.io')(require('http').Server(app).listen(port, () => console.log(`Listening on http://localhost:${port}/`)));
 require('dotenv').config();
 
 app.use(express.static('public'));
@@ -147,5 +147,3 @@ io.on('connection', socket => {
 });
 
 app.get('*', (req, res) => res.sendFile(__dirname + '/public/index.html'));
-
-app.listen(port, () => console.log(`Listening on http://localhost:${port}/`));
