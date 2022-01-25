@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3001;
+const io = require('socket.io')();
 require('dotenv').config();
 
 app.use(express.static('public'));
@@ -22,6 +23,23 @@ app.use(function (req, res, next) {
 	);
 	next();
 });
+
+let activeUsers = {
+	getSocket(user) {
+		if (this.hasOwnProperty(user)) return this[user];
+		else return this[this.getId(user)];
+	},
+	setSocket(id, socket) {
+		this[id] = socket;
+	},
+	removeSocket(socketId) {
+		delete this[this.getId(socketId)];
+	},
+	getId(user) {
+		return Object.keys(this).filter(k => (k.toLowerCase().indexOf(user.toLowerCase()) > -1) || (user.toLowerCase().indexOf(k.toLowerCase()) > -1))[0];
+	},
+	getUsername() {}
+};
 
 const getHashedPassword = password => {
 	const sha256 = crypto.createHash('sha256');
@@ -117,8 +135,15 @@ app.post('/message', authenticateJWT, (req, res) => {
   }
   client.connect(() => {
 	  const messagesCollection = client.db("nanobeezzone").collection("messages");
+		let receiver = activeUsers.getSocket(req.body.newMessage.receiver);
+		if (receiver) receiver.emit('send-message', req.body.newMessage);
 	  messagesCollection.insertOne(req.body.newMessage).then(() => res.status(201).json({success: {message: 'Message Sent!', status: res.statusCode}}));
   });
+});
+
+io.on('connection', socket => {
+	socket.on('active-user', user => activeUsers.setSocket(`${user}:${socket.id}`, socket));
+	socket.on('disconnect', () => activeUsers.removeSocket(socket.id));
 });
 
 app.get('*', (req, res) => res.sendFile(__dirname + '/public/index.html'));
